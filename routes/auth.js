@@ -9,10 +9,10 @@ admin.initializeApp({
 });
 
 router.post('/login', async (req, res) => {
-    const { idToken } = req.body;
+    const { firebaseIdToken } = req.body;
 
     try {
-        const decoded = await admin.auth().verifyIdToken(idToken);
+        const decoded = await admin.auth().verifyIdToken(firebaseIdToken);
         const { uid, email, name } = decoded;
 
         await pool.query(
@@ -20,7 +20,12 @@ router.post('/login', async (req, res) => {
             [uid, email, name]
         );
 
-        res.json({ uid, email, name });
+        const result = await pool.query(
+            'SELECT uid, email, name, score FROM users WHERE uid = $1',
+            [uid]
+        );
+
+        res.json(result.rows[0]);
     } catch (err) {
         res.status(401).json({ error: 'Invalid token' });
     }
