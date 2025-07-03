@@ -20,14 +20,15 @@ router.post('/login', async (req, res) => {
             [uid, email, name]
         );
 
-        const result = await pool.query(
-            'SELECT uid, email, name, score FROM users WHERE uid = $1',
-            [uid]
-        );
-
-        res.json(result.rows[0]);
+        res.status(200).json({
+            success: true,
+            message: 'Login success'
+        });
     } catch (err) {
-        res.status(401).json({ error: 'Invalid token' });
+        res.status(401).json({
+            success: false,
+            message: err.message
+        });
     }
 });
 
