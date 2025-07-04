@@ -1,17 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const admin = require('firebase-admin');
+const admin = require('../firebaseAdmin');
 const pool = require('../db');
-const serviceAccount = require('../serviceAccountKey.json');
-
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-});
 
 router.post('/login', async (req, res) => {
-    const { firebaseIdToken } = req.body;
-
     try {
+        const { firebaseIdToken } = req.body;
         const decoded = await admin.auth().verifyIdToken(firebaseIdToken);
         const { uid, email, name } = decoded;
 
@@ -20,15 +14,9 @@ router.post('/login', async (req, res) => {
             [uid, email, name]
         );
 
-        res.status(200).json({
-            success: true,
-            message: 'Login success'
-        });
+        res.status(200).json({ success: true, message: 'Login success' });
     } catch (err) {
-        res.status(401).json({
-            success: false,
-            message: err.message
-        });
+        res.status(401).json({ success: false, message: err.message });
     }
 });
 
