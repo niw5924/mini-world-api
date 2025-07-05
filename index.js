@@ -1,10 +1,17 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const admin = require('firebase-admin');
+const serviceAccount = require('./serviceAccountKey.json');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 
 dotenv.config();
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+});
+
 const app = express();
 
 app.use(cors());

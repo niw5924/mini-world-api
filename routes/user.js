@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const admin = require('../firebaseAdmin');
+const admin = require('firebase-admin');
 const pool = require('../db');
 
 const authenticate = async (req, res, next) => {
