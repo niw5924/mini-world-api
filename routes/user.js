@@ -41,4 +41,26 @@ router.get('/me', authenticate, async (req, res) => {
     }
 });
 
+router.get('/ranking', async (req, res) => {
+    try {
+        const result = await pool.query(
+            `
+            SELECT
+                uid,
+                win_count,
+                lose_count,
+                win_streak,
+                rank_point,
+                DENSE_RANK() OVER (ORDER BY rank_point DESC) AS rank
+            FROM user_stats
+            ORDER BY rank_point DESC
+            `
+        );
+
+        res.status(200).json({ success: true, ranking: result.rows });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
 module.exports = router;
