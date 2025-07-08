@@ -63,14 +63,12 @@ router.get('/ranking', async (req, res) => {
         const result = await pool.query(
             `
             SELECT
-                uid,
-                win_count,
-                lose_count,
-                win_streak,
-                rank_point,
-                DENSE_RANK() OVER (ORDER BY rank_point DESC) AS rank
-            FROM user_stats
-            ORDER BY rank_point DESC
+                ui.name,
+                us.rank_point,
+                DENSE_RANK() OVER (ORDER BY us.rank_point DESC) AS rank
+            FROM user_stats us
+            JOIN user_info ui ON us.uid = ui.uid
+            ORDER BY us.rank_point DESC
             `
         );
 
