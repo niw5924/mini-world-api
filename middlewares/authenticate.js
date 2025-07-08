@@ -8,6 +8,7 @@ const authenticate = async (req, res, next) => {
         req.uid = decoded.uid;
         req.name = decoded.name;
         req.email = decoded.email;
+        req.photoUrl = decoded.picture;
         next();
     } catch (err) {
         res.status(401).json({ success: false, message: err.message });

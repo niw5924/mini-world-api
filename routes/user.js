@@ -7,11 +7,11 @@ router.post('/init-info', authenticate, async (req, res) => {
     try {
         await pool.query(
             `
-            INSERT INTO user_info (uid, name, email)
-            VALUES ($1, $2, $3)
+            INSERT INTO user_info (uid, name, email, photo_url)
+            VALUES ($1, $2, $3, $4)
             ON CONFLICT (uid) DO NOTHING
             `,
-            [req.uid, req.name, req.email]
+            [req.uid, req.name, req.email, req.photoUrl]
         );
 
         res.status(200).json({ success: true, message: 'User info initialized' });
@@ -64,6 +64,7 @@ router.get('/ranking', async (req, res) => {
             `
             SELECT
                 ui.name,
+                ui.photo_url,
                 us.rank_point,
                 DENSE_RANK() OVER (ORDER BY us.rank_point DESC) AS rank
             FROM user_stats us
