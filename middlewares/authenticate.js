@@ -6,6 +6,8 @@ const authenticate = async (req, res, next) => {
         const firebaseIdToken = authHeader.split(' ')[1];
         const decoded = await admin.auth().verifyIdToken(firebaseIdToken);
         req.uid = decoded.uid;
+        req.name = decoded.name;
+        req.email = decoded.email;
         next();
     } catch (err) {
         res.status(401).json({ success: false, message: err.message });

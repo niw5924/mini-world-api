@@ -3,7 +3,24 @@ const router = express.Router();
 const pool = require('../db');
 const authenticate = require('../middlewares/authenticate');
 
-router.post('/init', authenticate, async (req, res) => {
+router.post('/init-info', authenticate, async (req, res) => {
+    try {
+        await pool.query(
+            `
+            INSERT INTO user_info (uid, name, email)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (uid) DO NOTHING
+            `,
+            [req.uid, req.name, req.email]
+        );
+
+        res.status(200).json({ success: true, message: 'User info initialized' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+router.post('/init-stats', authenticate, async (req, res) => {
     try {
         await pool.query(
             `
