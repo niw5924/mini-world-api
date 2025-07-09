@@ -63,6 +63,7 @@ router.get('/ranking', async (req, res) => {
         const result = await pool.query(
             `
             SELECT
+                us.uid,
                 ui.name,
                 ui.photo_url,
                 us.rank_point,
