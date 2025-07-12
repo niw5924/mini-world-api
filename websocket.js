@@ -6,7 +6,7 @@ module.exports = function initWebsocket(server) {
   const rooms = new Map(); // { gameId: [ { ws, choice } ] }
 
   wss.on('connection', (ws, req) => {
-    const [, , gameId] = req.url.split('/');
+    const gameId = req.url.split('/').pop();
     if (!gameId) {
       ws.close(1008, 'Missing gameId in URL');
       return;
