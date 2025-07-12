@@ -8,10 +8,6 @@ module.exports = function initWebsocket(server) {
 
   wss.on('connection', (ws, req) => {
     const gameId = req.url.split('/').pop();
-    if (!gameId) {
-      ws.close(1008, 'Missing gameId in URL');
-      return;
-    }
 
     if (!rooms.has(gameId)) rooms.set(gameId, []);
     const players = rooms.get(gameId);
@@ -25,67 +21,63 @@ module.exports = function initWebsocket(server) {
         return;
       }
 
-      // 🔐 인증 메시지 처리
-      if (message.type === 'auth') {
-        try {
-          const decoded = await admin.auth().verifyIdToken(message.idToken);
-          const uid = decoded.uid;
+      switch (message.type) {
+        case 'auth':
+          try {
+            const decoded = await admin.auth().verifyIdToken(message.firebaseIdToken);
+            const uid = decoded.uid;
 
-          if (players.length >= 2) {
-            ws.send(JSON.stringify({ type: 'error', message: 'Room full' }));
-            ws.close(1008, 'Room full');
-            console.log(`[${gameId}] ❌ 입장 거절 - 방 가득참 (uid: ${uid})`);
-            return;
+            if (players.length >= 2) {
+              ws.send(JSON.stringify({ type: 'error', message: 'Room full' }));
+              ws.close(1008, 'Room full');
+              console.log(`[${gameId}] ❌ 입장 거절 - 방 가득참 (uid: ${uid})`);
+              return;
+            }
+
+            players.push({ ws, uid, choice: null });
+            console.log(`[${gameId}] ✅ 입장 완료 (uid: ${uid}) (${players.length}/2)`);
+          } catch {
+            ws.send(JSON.stringify({ type: 'error', message: 'Invalid ID token' }));
+            ws.close(1008, 'Unauthorized');
           }
+          break;
 
-          players.push({ ws, uid, choice: null });
-          console.log(`[${gameId}] ✅ 입장 완료 (uid: ${uid}) (${players.length}/2)`);
-        } catch (err) {
-          ws.send(JSON.stringify({ type: 'error', message: 'Invalid ID token' }));
-          ws.close(1008, 'Unauthorized');
-        }
-        return;
-      }
+        case 'choice':
+          const player = players.find((p) => p.ws === ws);
+          player.choice = message.data;
+          console.log(`[${gameId}] 🎮 선택 수신: ${player.choice} (uid: ${player.uid})`);
 
-      // 🎮 선택 처리
-      if (message.type === 'choice') {
-        const player = players.find((p) => p.ws === ws);
-        if (!player?.uid) {
-          ws.send(JSON.stringify({ type: 'error', message: 'Unauthenticated' }));
-          return;
-        }
+          if (players.length === 2 && players.every((p) => p.choice !== null)) {
+            const [p1, p2] = players;
+            const result = judge(p1.choice, p2.choice);
 
-        player.choice = message.data;
-        console.log(`[${gameId}] 🎮 선택 수신: ${player.choice} (uid: ${player.uid})`);
+            console.log(`[${gameId}] ✅ 결과 계산 완료 → ${p1.choice} vs ${p2.choice}`);
 
-        if (players.length === 2 && players.every((p) => p.choice !== null)) {
-          const [p1, p2] = players;
-          const result = judge(p1.choice, p2.choice);
+            p1.ws.send(
+              JSON.stringify({
+                type: 'result',
+                myChoice: p1.choice,
+                opponentChoice: p2.choice,
+                outcome: result === 0 ? 'draw' : result === 1 ? 'win' : 'lose',
+              })
+            );
 
-          console.log(
-            `[${gameId}] ✅ 결과 계산 완료 → ${p1.choice} vs ${p2.choice}`
-          );
+            p2.ws.send(
+              JSON.stringify({
+                type: 'result',
+                myChoice: p2.choice,
+                opponentChoice: p1.choice,
+                outcome: result === 0 ? 'draw' : result === -1 ? 'win' : 'lose',
+              })
+            );
 
-          p1.ws.send(
-            JSON.stringify({
-              type: 'result',
-              myChoice: p1.choice,
-              opponentChoice: p2.choice,
-              outcome: result === 0 ? 'draw' : result === 1 ? 'win' : 'lose',
-            })
-          );
+            rooms.delete(gameId);
+          }
+          break;
 
-          p2.ws.send(
-            JSON.stringify({
-              type: 'result',
-              myChoice: p2.choice,
-              opponentChoice: p1.choice,
-              outcome: result === 0 ? 'draw' : result === -1 ? 'win' : 'lose',
-            })
-          );
-
-          rooms.delete(gameId);
-        }
+        default:
+          ws.send(JSON.stringify({ type: 'error', message: 'Unknown message type' }));
+          break;
       }
     });
 
@@ -106,7 +98,8 @@ module.exports = function initWebsocket(server) {
       (c1 === '가위' && c2 === '보') ||
       (c1 === '바위' && c2 === '가위') ||
       (c1 === '보' && c2 === '바위')
-    ) return 1;
+    )
+      return 1;
     return -1;
   }
 
