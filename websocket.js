@@ -10,7 +10,8 @@ module.exports = function initWebsocket(server) {
     const gameId = req.url.split('/').pop();
 
     if (!rooms.has(gameId)) rooms.set(gameId, []);
-    const players = rooms.get(gameId);
+
+    const players = () => rooms.get(gameId); // ✅ 항상 최신 상태 참조
 
     ws.on('message', async (raw) => {
       let message;
@@ -27,15 +28,15 @@ module.exports = function initWebsocket(server) {
             const decoded = await admin.auth().verifyIdToken(message.firebaseIdToken);
             const uid = decoded.uid;
 
-            if (players.length >= 2) {
+            if (players().length >= 2) {
               ws.send(JSON.stringify({ type: 'error', message: 'Room full' }));
               ws.close(1008, 'Room full');
               console.log(`[${gameId}] ❌ 입장 거절 - 방 가득참 (uid: ${uid})`);
               return;
             }
 
-            players.push({ ws, uid, choice: null });
-            console.log(`[${gameId}] ✅ 입장 완료 (uid: ${uid}) (${players.length}/2)`);
+            players().push({ ws, uid, choice: null });
+            console.log(`[${gameId}] ✅ 입장 완료 (uid: ${uid}) (${players().length}/2)`);
           } catch {
             ws.send(JSON.stringify({ type: 'error', message: 'Invalid ID token' }));
             ws.close(1008, 'Unauthorized');
@@ -43,12 +44,12 @@ module.exports = function initWebsocket(server) {
           break;
 
         case 'choice':
-          const player = players.find((p) => p.ws === ws);
+          const player = players().find((p) => p.ws === ws);
           player.choice = message.data;
           console.log(`[${gameId}] 🎮 선택 수신: ${player.choice} (uid: ${player.uid})`);
 
-          if (players.length === 2 && players.every((p) => p.choice !== null)) {
-            const [p1, p2] = players;
+          if (players().length === 2 && players().every((p) => p.choice !== null)) {
+            const [p1, p2] = players();
             const result = judge(p1.choice, p2.choice);
 
             console.log(`[${gameId}] ✅ 결과 계산 완료 → ${p1.choice} vs ${p2.choice}`);
@@ -70,8 +71,6 @@ module.exports = function initWebsocket(server) {
                 outcome: result === 0 ? 'draw' : result === -1 ? 'win' : 'lose',
               })
             );
-
-            rooms.delete(gameId);
           }
           break;
 
@@ -82,7 +81,7 @@ module.exports = function initWebsocket(server) {
     });
 
     ws.on('close', () => {
-      const remaining = players.filter((p) => p.ws !== ws);
+      const remaining = players().filter((p) => p.ws !== ws);
       if (remaining.length === 0) {
         rooms.delete(gameId);
       } else {
