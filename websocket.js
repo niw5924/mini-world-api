@@ -3,6 +3,7 @@ const admin = require('firebase-admin');
 
 module.exports = function initWebsocket(server) {
   const wss = new WebSocketServer({ server });
+
   const rooms = new Map();
 
   wss.on('connection', (ws, req) => {
@@ -13,10 +14,14 @@ module.exports = function initWebsocket(server) {
     const players = () => rooms.get(gameId);
 
     const broadcastUsers = () => {
-      const list = players().map(p => p.uid);
-      players().forEach(p => {
-        p.ws.send(JSON.stringify({ type: 'joinedUsers', users: list }));
-      });
+      const list = players().map(p => ({
+        uid: p.uid,
+        name: p.name,
+        photoUrl: p.photoUrl
+      }));
+      players().forEach(p =>
+        p.ws.send(JSON.stringify({ type: 'joinedUsers', users: list }))
+      );
     };
 
     ws.on('message', async raw => {
@@ -33,6 +38,8 @@ module.exports = function initWebsocket(server) {
           try {
             const decoded = await admin.auth().verifyIdToken(message.firebaseIdToken);
             const uid = decoded.uid;
+            const name = decoded.name;
+            const photoUrl = decoded.picture;
 
             if (players().length >= 2) {
               ws.send(JSON.stringify({ type: 'error', message: 'Room full' }));
@@ -41,7 +48,7 @@ module.exports = function initWebsocket(server) {
               return;
             }
 
-            players().push({ ws, uid, choice: null });
+            players().push({ ws, uid, name, photoUrl, choice: null });
             broadcastUsers();
             console.log(`[${gameId}] ✅ 입장 완료 (uid: ${uid}) (${players().length}/2)`);
           } catch {
@@ -50,15 +57,15 @@ module.exports = function initWebsocket(server) {
           }
           break;
 
-        case 'choice': {
+        case 'choice':
           const player = players().find(p => p.ws === ws);
-          if (!player) break;
           player.choice = message.data;
           console.log(`[${gameId}] 🎮 선택 수신: ${player.choice} (uid: ${player.uid})`);
 
           if (players().length === 2 && players().every(p => p.choice !== null)) {
             const [p1, p2] = players();
             const result = judge(p1.choice, p2.choice);
+
             console.log(`[${gameId}] ✅ 결과 계산 완료 → ${p1.choice} vs ${p2.choice}`);
 
             p1.ws.send(
@@ -80,7 +87,6 @@ module.exports = function initWebsocket(server) {
             );
           }
           break;
-        }
 
         default:
           ws.send(JSON.stringify({ type: 'error', message: 'Unknown message type' }));
