@@ -1,23 +1,22 @@
 const { WebSocketServer } = require('ws');
 const admin = require('firebase-admin');
+const pool = require('./db');
 
 module.exports = function initWebsocket(server) {
   const wss = new WebSocketServer({ server });
-
   const rooms = new Map();
 
   wss.on('connection', (ws, req) => {
     const gameId = req.url.split('/').pop();
     if (!rooms.has(gameId)) rooms.set(gameId, []);
 
-    // 공통 함수 정의
     const players = () => rooms.get(gameId);
 
     const broadcastUsers = () => {
       const list = players().map(p => ({
         uid: p.uid,
         name: p.name,
-        photoUrl: p.photoUrl
+        photoUrl: p.photoUrl,
       }));
       players().forEach(p =>
         p.ws.send(JSON.stringify({ type: 'joinedUsers', users: list }))
@@ -68,11 +67,10 @@ module.exports = function initWebsocket(server) {
 
             console.log(`[${gameId}] ✅ 결과 계산 완료 → ${p1.choice} vs ${p2.choice}`);
 
-            // 결과에 따른 포인트 계산
             const pointMap = {
               win: 20,
               lose: -20,
-              draw: 0
+              draw: 0,
             };
 
             const p1Outcome = result === 0 ? 'draw' : result === 1 ? 'win' : 'lose';
@@ -84,7 +82,7 @@ module.exports = function initWebsocket(server) {
                 myChoice: p1.choice,
                 opponentChoice: p2.choice,
                 outcome: p1Outcome,
-                rankPointDelta: pointMap[p1Outcome]
+                rankPointDelta: pointMap[p1Outcome],
               })
             );
 
@@ -94,9 +92,39 @@ module.exports = function initWebsocket(server) {
                 myChoice: p2.choice,
                 opponentChoice: p1.choice,
                 outcome: p2Outcome,
-                rankPointDelta: pointMap[p2Outcome]
+                rankPointDelta: pointMap[p2Outcome],
               })
             );
+
+            try {
+              await pool.query(
+                `
+                INSERT INTO user_game_records (
+                  uid,
+                  game_mode,
+                  rank_point_delta,
+                  result
+                ) VALUES ($1, $2, $3, $4)
+                `,
+                [p1.uid, 'rps', pointMap[p1Outcome], p1Outcome]
+              );
+
+              await pool.query(
+                `
+                INSERT INTO user_game_records (
+                  uid,
+                  game_mode,
+                  rank_point_delta,
+                  result
+                ) VALUES ($1, $2, $3, $4)
+                `,
+                [p2.uid, 'rps', pointMap[p2Outcome], p2Outcome]
+              );
+
+              console.log(`[${gameId}] 📝 게임 결과 저장 완료`);
+            } catch (err) {
+              console.error(`[${gameId}] ❌ 게임 결과 저장 실패:`, err);
+            }
           }
           break;
 
