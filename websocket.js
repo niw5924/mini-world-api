@@ -68,12 +68,23 @@ module.exports = function initWebsocket(server) {
 
             console.log(`[${gameId}] ✅ 결과 계산 완료 → ${p1.choice} vs ${p2.choice}`);
 
+            // 결과에 따른 포인트 계산
+            const pointMap = {
+              win: 20,
+              lose: -20,
+              draw: 0
+            };
+
+            const p1Outcome = result === 0 ? 'draw' : result === 1 ? 'win' : 'lose';
+            const p2Outcome = result === 0 ? 'draw' : result === -1 ? 'win' : 'lose';
+
             p1.ws.send(
               JSON.stringify({
                 type: 'result',
                 myChoice: p1.choice,
                 opponentChoice: p2.choice,
-                outcome: result === 0 ? 'draw' : result === 1 ? 'win' : 'lose'
+                outcome: p1Outcome,
+                rankPointDelta: pointMap[p1Outcome]
               })
             );
 
@@ -82,7 +93,8 @@ module.exports = function initWebsocket(server) {
                 type: 'result',
                 myChoice: p2.choice,
                 opponentChoice: p1.choice,
-                outcome: result === 0 ? 'draw' : result === -1 ? 'win' : 'lose'
+                outcome: p2Outcome,
+                rankPointDelta: pointMap[p2Outcome]
               })
             );
           }
