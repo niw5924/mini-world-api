@@ -8,14 +8,16 @@ router.get('/me', authenticate, async (req, res) => {
     const result = await pool.query(
       `
       SELECT 
-        game_mode,
-        opponent_uid,
-        rank_point_delta,
-        result,
-        created_at
-      FROM user_game_records
-      WHERE uid = $1
-      ORDER BY created_at DESC
+        ugr.game_mode,
+        ugr.rank_point_delta,
+        ugr.result,
+        ugr.created_at,
+        ui.name AS opponent_name,
+        ui.photo_url AS opponent_photo_url
+      FROM user_game_records ugr
+      JOIN user_info ui ON ugr.opponent_uid = ui.uid
+      WHERE ugr.uid = $1
+      ORDER BY ugr.created_at DESC
       `,
       [req.uid]
     );
