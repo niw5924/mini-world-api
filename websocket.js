@@ -101,24 +101,26 @@ module.exports = function initWebsocket(server) {
                 `
                 INSERT INTO user_game_records (
                   uid,
+                  opponent_uid,
                   game_mode,
                   rank_point_delta,
                   result
-                ) VALUES ($1, $2, $3, $4)
+                ) VALUES ($1, $2, $3, $4, $5)
                 `,
-                [p1.uid, 'rps', pointMap[p1Outcome], p1Outcome]
+                [p1.uid, p2.uid, 'rps', pointMap[p1Outcome], p1Outcome]
               );
 
               await pool.query(
                 `
                 INSERT INTO user_game_records (
                   uid,
+                  opponent_uid,
                   game_mode,
                   rank_point_delta,
                   result
-                ) VALUES ($1, $2, $3, $4)
+                ) VALUES ($1, $2, $3, $4, $5)
                 `,
-                [p2.uid, 'rps', pointMap[p2Outcome], p2Outcome]
+                [p2.uid, p1.uid, 'rps', pointMap[p2Outcome], p2Outcome]
               );
 
               console.log(`[${gameId}] 📝 게임 결과 저장 완료`);
