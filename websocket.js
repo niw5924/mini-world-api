@@ -1,7 +1,7 @@
 const { WebSocketServer } = require('ws');
 const admin = require('firebase-admin');
 const pool = require('./db');
-const { saveGameResult } = require('./game_result_repository');
+const { saveGameResult, updateUserStats } = require('./game_result_repository');
 
 module.exports = function initWebsocket(server) {
   const wss = new WebSocketServer({ server });
@@ -114,7 +114,10 @@ module.exports = function initWebsocket(server) {
                 result: p2Outcome,
               });
 
-              console.log(`[${gameId}] 📝 게임 결과 저장 완료`);
+              await updateUserStats(p1.uid, p1Outcome, pointMap[p1Outcome]);
+              await updateUserStats(p2.uid, p2Outcome, pointMap[p2Outcome]);
+
+              console.log(`[${gameId}] 📝 게임 결과 및 스탯 저장 완료`);
             } catch (err) {
               console.error(`[${gameId}] ❌ 게임 결과 저장 실패:`, err);
             }
