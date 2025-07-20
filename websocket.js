@@ -1,6 +1,7 @@
 const { WebSocketServer } = require('ws');
 const admin = require('firebase-admin');
 const pool = require('./db');
+const { saveGameResult } = require('./game_result_repository');
 
 module.exports = function initWebsocket(server) {
   const wss = new WebSocketServer({ server });
@@ -97,31 +98,21 @@ module.exports = function initWebsocket(server) {
             );
 
             try {
-              await pool.query(
-                `
-                INSERT INTO user_game_records (
-                  uid,
-                  opponent_uid,
-                  game_mode,
-                  rank_point_delta,
-                  result
-                ) VALUES ($1, $2, $3, $4, $5)
-                `,
-                [p1.uid, p2.uid, 'rps', pointMap[p1Outcome], p1Outcome]
-              );
+              await saveGameResult({
+                uid: p1.uid,
+                opponentUid: p2.uid,
+                gameMode: 'rps',
+                pointDelta: pointMap[p1Outcome],
+                result: p1Outcome,
+              });
 
-              await pool.query(
-                `
-                INSERT INTO user_game_records (
-                  uid,
-                  opponent_uid,
-                  game_mode,
-                  rank_point_delta,
-                  result
-                ) VALUES ($1, $2, $3, $4, $5)
-                `,
-                [p2.uid, p1.uid, 'rps', pointMap[p2Outcome], p2Outcome]
-              );
+              await saveGameResult({
+                uid: p2.uid,
+                opponentUid: p1.uid,
+                gameMode: 'rps',
+                pointDelta: pointMap[p2Outcome],
+                result: p2Outcome,
+              });
 
               console.log(`[${gameId}] 📝 게임 결과 저장 완료`);
             } catch (err) {
