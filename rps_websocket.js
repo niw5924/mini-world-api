@@ -1,17 +1,17 @@
 const { WebSocketServer } = require('ws');
 const admin = require('firebase-admin');
-const pool = require('./db');
 const { saveGameResult, updateUserStats } = require('./game_result_repository');
+const { rpsOpenRooms } = require('./rps_open_rooms_store');
 
 module.exports = function initWebsocket(server) {
   const wss = new WebSocketServer({ server });
-  const rooms = new Map();
+  const liveRooms = new Map();
 
   wss.on('connection', (ws, req) => {
     const gameId = req.url.split('/').pop();
-    if (!rooms.has(gameId)) rooms.set(gameId, []);
+    if (!liveRooms.has(gameId)) liveRooms.set(gameId, []);
 
-    const players = () => rooms.get(gameId);
+    const players = () => liveRooms.get(gameId);
 
     const broadcastUsers = () => {
       const list = players().map(p => ({
@@ -44,7 +44,6 @@ module.exports = function initWebsocket(server) {
             if (players().length >= 2) {
               ws.send(JSON.stringify({ type: 'error', message: 'Room full' }));
               ws.close(1008, 'Room full');
-              console.log(`[${gameId}] ❌ 입장 거절 - 방 가득참 (uid: ${uid})`);
               return;
             }
 
@@ -59,43 +58,35 @@ module.exports = function initWebsocket(server) {
 
         case 'choice':
           const player = players().find(p => p.ws === ws);
+          if (!player) return;
+
           player.choice = message.data;
           console.log(`[${gameId}] 🎮 선택 수신: ${player.choice} (uid: ${player.uid})`);
 
           if (players().length === 2 && players().every(p => p.choice !== null)) {
             const [p1, p2] = players();
             const result = judge(p1.choice, p2.choice);
-
             console.log(`[${gameId}] ✅ 결과 계산 완료 → ${p1.choice} vs ${p2.choice}`);
 
-            const pointMap = {
-              win: 20,
-              lose: -20,
-              draw: 0,
-            };
-
+            const pointMap = { win: 20, lose: -20, draw: 0 };
             const p1Outcome = result === 0 ? 'draw' : result === 1 ? 'win' : 'lose';
             const p2Outcome = result === 0 ? 'draw' : result === -1 ? 'win' : 'lose';
 
-            p1.ws.send(
-              JSON.stringify({
-                type: 'result',
-                myChoice: p1.choice,
-                opponentChoice: p2.choice,
-                outcome: p1Outcome,
-                rankPointDelta: pointMap[p1Outcome],
-              })
-            );
+            p1.ws.send(JSON.stringify({
+              type: 'result',
+              myChoice: p1.choice,
+              opponentChoice: p2.choice,
+              outcome: p1Outcome,
+              rankPointDelta: pointMap[p1Outcome],
+            }));
 
-            p2.ws.send(
-              JSON.stringify({
-                type: 'result',
-                myChoice: p2.choice,
-                opponentChoice: p1.choice,
-                outcome: p2Outcome,
-                rankPointDelta: pointMap[p2Outcome],
-              })
-            );
+            p2.ws.send(JSON.stringify({
+              type: 'result',
+              myChoice: p2.choice,
+              opponentChoice: p1.choice,
+              outcome: p2Outcome,
+              rankPointDelta: pointMap[p2Outcome],
+            }));
 
             try {
               await saveGameResult({
@@ -133,9 +124,11 @@ module.exports = function initWebsocket(server) {
     ws.on('close', () => {
       const remaining = players().filter(p => p.ws !== ws);
       if (remaining.length === 0) {
-        rooms.delete(gameId);
+        liveRooms.delete(gameId);
+        rpsOpenRooms.delete(gameId);
       } else {
-        rooms.set(gameId, remaining);
+        liveRooms.set(gameId, remaining);
+        rpsOpenRooms.set(gameId, remaining.map(p => p.uid));
         broadcastUsers();
       }
       console.log(`[${gameId}] ➖ 연결 종료, 남은 인원: ${remaining.length}`);
@@ -148,8 +141,7 @@ module.exports = function initWebsocket(server) {
       (c1 === '가위' && c2 === '보') ||
       (c1 === '바위' && c2 === '가위') ||
       (c1 === '보' && c2 === '바위')
-    )
-      return 1;
+    ) return 1;
     return -1;
   }
 
