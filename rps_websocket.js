@@ -5,13 +5,11 @@ const { rpsOpenRooms } = require('./rps_open_rooms_store');
 
 module.exports = function initWebsocket(server) {
   const wss = new WebSocketServer({ server });
-  const liveRooms = new Map();
 
   wss.on('connection', (ws, req) => {
     const gameId = req.url.split('/').pop();
-    if (!liveRooms.has(gameId)) liveRooms.set(gameId, []);
 
-    const players = () => liveRooms.get(gameId);
+    const players = () => rpsOpenRooms.get(gameId);
 
     const broadcastUsers = () => {
       const list = players().map(p => ({
@@ -122,11 +120,9 @@ module.exports = function initWebsocket(server) {
     ws.on('close', () => {
       const remaining = players().filter(p => p.ws !== ws);
       if (remaining.length === 0) {
-        liveRooms.delete(gameId);
         rpsOpenRooms.delete(gameId);
       } else {
-        liveRooms.set(gameId, remaining);
-        rpsOpenRooms.set(gameId, remaining.map(p => p.uid));
+        rpsOpenRooms.set(gameId, remaining);
         broadcastUsers();
       }
       console.log(`[${gameId}] ➖ 연결 종료, 남은 인원: ${remaining.length}`);

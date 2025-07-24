@@ -6,19 +6,18 @@ const authenticate = require('../middlewares/authenticate');
 
 router.post('/join', authenticate, async (req, res) => {
   try {
-    let gameId = null;
+    let gameId;
 
-    for (const [id, uids] of rpsOpenRooms.entries()) {
-      if (uids.length < 2) {
+    for (const [id, players] of rpsOpenRooms.entries()) {
+      if (players.length < 2) {
         gameId = id;
-        uids.push(req.uid);
         break;
       }
     }
 
-    if (!gameId) {
+    if (gameId === undefined) {
       gameId = uuidv4();
-      rpsOpenRooms.set(gameId, [req.uid]);
+      rpsOpenRooms.set(gameId, []);
     }
 
     return res.json({
