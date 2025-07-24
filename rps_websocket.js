@@ -58,8 +58,6 @@ module.exports = function initWebsocket(server) {
 
         case 'choice':
           const player = players().find(p => p.ws === ws);
-          if (!player) return;
-
           player.choice = message.data;
           console.log(`[${gameId}] 🎮 선택 수신: ${player.choice} (uid: ${player.uid})`);
 
