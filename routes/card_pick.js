@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { rpsRooms } = require('../rps_rooms');
+const { cardPickRooms } = require('../card_pick_rooms');
 const authenticate = require('../middlewares/authenticate');
 
 router.post('/join', authenticate, async (req, res) => {
   try {
     let gameId;
 
-    for (const [id, players] of rpsRooms.entries()) {
+    for (const [id, players] of cardPickRooms.entries()) {
       if (players.length < 2) {
         gameId = id;
         break;
@@ -17,7 +17,7 @@ router.post('/join', authenticate, async (req, res) => {
 
     if (gameId === undefined) {
       gameId = uuidv4();
-      rpsRooms.set(gameId, []);
+      cardPickRooms.set(gameId, []);
     }
 
     return res.json({

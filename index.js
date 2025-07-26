@@ -8,7 +8,9 @@ const serviceAccount = require('./serviceAccountKey.json');
 const userRoutes = require('./routes/user');
 const recordRoutes = require('./routes/record');
 const rpsRoutes = require('./routes/rps');
-const initWebsocket = require('./rps_websocket');
+const cardPickRoutes = require('./routes/card_pick');
+
+const initWebSocketRouter = require('./websocket_router');
 
 dotenv.config();
 
@@ -24,9 +26,11 @@ app.use(express.json());
 app.use('/api/user', userRoutes);
 app.use('/api/record', recordRoutes);
 app.use('/api/rps', rpsRoutes);
+app.use('/api/card-pick', cardPickRoutes);
 
 const server = http.createServer(app);
-initWebsocket(server);
+
+initWebSocketRouter(server);
 
 const PORT = process.env.PORT;
 server.listen(PORT, () => {
