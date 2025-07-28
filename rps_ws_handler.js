@@ -97,8 +97,17 @@ module.exports = function handleRpsConnection(ws, req) {
               result: p2Outcome,
             });
 
-            await updateUserStats(p1.uid, p1Outcome, pointMap[p1Outcome]);
-            await updateUserStats(p2.uid, p2Outcome, pointMap[p2Outcome]);
+            await updateUserStats({
+              uid: p1.uid,
+              outcome: p1Outcome,
+              pointDelta: pointMap[p1Outcome],
+            });
+
+            await updateUserStats({
+              uid: p2.uid,
+              outcome: p2Outcome,
+              pointDelta: pointMap[p2Outcome],
+            });
 
             console.log(`[${gameId}] 📝 게임 결과 및 스탯 저장 완료`);
           } catch (err) {
