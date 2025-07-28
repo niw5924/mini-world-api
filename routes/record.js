@@ -3,6 +3,34 @@ const router = express.Router();
 const pool = require('../db');
 const authenticate = require('../middlewares/authenticate');
 
+/**
+ * @swagger
+ * /api/record/me:
+ *   get:
+ *     summary: 나의 게임 기록 조회
+ *     tags: [Record]
+ *     description: Firebase 인증 토큰으로 인증된 사용자의 게임 기록을 페이징 처리하여 반환합니다.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: 불러올 데이터 수
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: 건너뛸 데이터 수
+ *     responses:
+ *       200:
+ *         description: 게임 기록 조회 성공
+ *       500:
+ *         description: 서버 오류
+ */
 router.get('/me', authenticate, async (req, res) => {
   try {
     const limit = parseInt(req.query.limit);
