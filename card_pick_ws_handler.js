@@ -1,5 +1,6 @@
 const admin = require('firebase-admin');
 const { cardPickRooms } = require('./card_pick_rooms');
+const pointMap = require('./constants/game_point_map');
 const { saveGameResult, updateUserStats } = require('./game_result_repository');
 
 module.exports = function handleCardPickConnection(ws, req) {
@@ -58,7 +59,6 @@ module.exports = function handleCardPickConnection(ws, req) {
         if (players().length === 2 && players().every(p => p.choice !== null)) {
           const [p1, p2] = players();
           const result = judge(p1.choice, p2.choice);
-          const pointMap = { win: 20, lose: -20, draw: 0 };
           const p1Outcome = result === 0 ? 'draw' : result === 1 ? 'win' : 'lose';
           const p2Outcome = result === 0 ? 'draw' : result === -1 ? 'win' : 'lose';
 

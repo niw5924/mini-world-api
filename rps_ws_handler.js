@@ -1,6 +1,7 @@
 const admin = require('firebase-admin');
-const { saveGameResult, updateUserStats } = require('./game_result_repository');
 const { rpsRooms } = require('./rps_rooms');
+const pointMap = require('./constants/game_point_map');
+const { saveGameResult, updateUserStats } = require('./game_result_repository');
 
 module.exports = function handleRpsConnection(ws, req) {
   const gameId = req.url.split('/').pop();
@@ -58,9 +59,6 @@ module.exports = function handleRpsConnection(ws, req) {
         if (players().length === 2 && players().every(p => p.choice !== null)) {
           const [p1, p2] = players();
           const result = judge(p1.choice, p2.choice);
-          console.log(`[${gameId}] ✅ 결과 계산 완료 → ${p1.choice} vs ${p2.choice}`);
-
-          const pointMap = { win: 20, lose: -20, draw: 0 };
           const p1Outcome = result === 0 ? 'draw' : result === 1 ? 'win' : 'lose';
           const p2Outcome = result === 0 ? 'draw' : result === -1 ? 'win' : 'lose';
 
