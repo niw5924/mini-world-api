@@ -15,7 +15,7 @@ async function saveGameResult({ uid, opponentUid, gameMode, pointDelta, result }
   await pool.query(query, values);
 }
 
-async function updateUserStats(uid, outcome, pointDelta) {
+async function updateUserStats({ uid, outcome, pointDelta }) {
   const query = `
     UPDATE user_stats
     SET
