@@ -10,7 +10,7 @@ const recordRoutes = require('./routes/record');
 const rpsRoutes = require('./routes/rps');
 const cardPickRoutes = require('./routes/card_pick');
 
-const initWebSocketRouter = require('./websocket_router');
+const initWebSocketRouter = require('./games/websocket_router');
 
 dotenv.config();
 

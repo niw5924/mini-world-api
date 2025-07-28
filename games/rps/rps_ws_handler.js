@@ -1,7 +1,7 @@
 const admin = require('firebase-admin');
 const { rpsRooms } = require('./rps_rooms');
-const pointMap = require('./constants/game_point_map');
-const { saveGameResult, updateUserStats } = require('./game_result_repository');
+const pointMap = require('../game_point_map');
+const { saveGameResult, updateUserStats } = require('../game_result_repository');
 
 module.exports = function handleRpsConnection(ws, req) {
   const gameId = req.url.split('/').pop();

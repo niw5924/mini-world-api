@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { cardPickRooms } = require('../card_pick_rooms');
+const { cardPickRooms } = require('../games/card_pick/card_pick_rooms');
 const authenticate = require('../middlewares/authenticate');
 
 router.post('/join', authenticate, async (req, res) => {

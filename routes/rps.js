@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
-const { rpsRooms } = require('../rps_rooms');
+const { rpsRooms } = require('../games/rps/rps_rooms');
 const authenticate = require('../middlewares/authenticate');
 
 router.post('/join', authenticate, async (req, res) => {

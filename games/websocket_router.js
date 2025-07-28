@@ -1,6 +1,6 @@
 const { WebSocketServer } = require('ws');
-const handleRpsConnection = require('./rps_ws_handler');
-const handleCardPickConnection = require('./card_pick_ws_handler');
+const handleRpsConnection = require('./rps/rps_ws_handler');
+const handleCardPickConnection = require('./card_pick/card_pick_ws_handler');
 
 module.exports = function initWebSocketRouter(server) {
   const wss = new WebSocketServer({ server });

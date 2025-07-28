@@ -1,4 +1,4 @@
-const pool = require('./db');
+const pool = require('../db');
 
 async function saveGameResult({ uid, opponentUid, gameMode, pointDelta, result }) {
   const query = `
