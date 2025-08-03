@@ -46,8 +46,7 @@ const server = http.createServer(app);
 initWebSocketRouter(server);
 
 // 서버 시작
-const PORT = process.env.PORT;
-server.listen(PORT, () => {
-  console.log(`🚀 mini_world_api running on http://localhost:${PORT}`);
-  console.log(`📚 Swagger UI available at http://localhost:${PORT}/api-docs`);
+server.listen(3000, '0.0.0.0', () => {
+  console.log('🚀 mini_world_api running on http://0.0.0.0:3000');
+  console.log('📚 Swagger UI available at http://0.0.0.0:3000/api-docs');
 });
