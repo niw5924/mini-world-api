@@ -19,7 +19,7 @@ async function updateUserStats({ uid, outcome, pointDelta }) {
   const query = `
     UPDATE user_stats
     SET
-      rank_point = rank_point + $1,
+      rank_point = GREATEST(rank_point + $1, 0),
       win_count = win_count + CASE WHEN $2 = 'win' THEN 1 ELSE 0 END,
       lose_count = lose_count + CASE WHEN $2 = 'lose' THEN 1 ELSE 0 END,
       win_streak = CASE
