@@ -10,6 +10,7 @@ const userRoutes = require('./routes/user');
 const recordRoutes = require('./routes/record');
 const rpsRoutes = require('./routes/rps');
 const cardPickRoutes = require('./routes/card_pick');
+const greedyRoutes = require('./routes/greedy');
 
 // WebSocket Router
 const initWebSocketRouter = require('./games/websocket_router');
@@ -40,6 +41,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/record', recordRoutes);
 app.use('/api/rps', rpsRoutes);
 app.use('/api/card-pick', cardPickRoutes);
+app.use('/api/greedy', greedyRoutes);
 
 // HTTP + WebSocket 서버
 const server = http.createServer(app);
