@@ -107,6 +107,33 @@ router.get('/me', authenticate, async (req, res) => {
 
 /**
  * @swagger
+ * /api/user/delete:
+ *   delete:
+ *     summary: 내 사용자 데이터 삭제
+ *     tags: [User]
+ *     description: Firebase 인증 토큰을 통해 확인된 사용자의 user_info, user_stats, user_game_records 데이터를 모두 삭제합니다.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 사용자 데이터 삭제 성공
+ *       500:
+ *         description: 서버 오류
+ */
+router.delete('/delete', authenticate, async (req, res) => {
+  try {
+    await pool.query(`DELETE FROM user_game_records WHERE uid = $1`, [req.uid]);
+    await pool.query(`DELETE FROM user_stats WHERE uid = $1`, [req.uid]);
+    await pool.query(`DELETE FROM user_info WHERE uid = $1`, [req.uid]);
+
+    res.status(200).json({ success: true, message: `User data deleted for UID: ${req.uid}` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * @swagger
  * /api/user/ranking:
  *   get:
  *     summary: 전체 사용자 랭킹 조회
