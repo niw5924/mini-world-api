@@ -143,7 +143,8 @@ router.get('/me', authenticate, async (req, res) => {
  *   delete:
  *     summary: 내 사용자 데이터 삭제
  *     tags: [User]
- *     description: Firebase 인증 토큰을 통해 확인된 사용자의 user_info, user_stats, user_game_records 데이터를 모두 삭제합니다.
+ *     description: Firebase 인증 토큰을 통해 확인된 사용자의 user_info, user_stats, user_items, user_game_records 데이터를 모두 삭제합니다. 
+ *                  purchase_history는 보존됩니다.
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -155,6 +156,7 @@ router.get('/me', authenticate, async (req, res) => {
 router.delete('/delete', authenticate, async (req, res) => {
   try {
     await pool.query(`DELETE FROM user_game_records WHERE uid = $1`, [req.uid]);
+    await pool.query(`DELETE FROM user_items WHERE uid = $1`, [req.uid]);
     await pool.query(`DELETE FROM user_stats WHERE uid = $1`, [req.uid]);
     await pool.query(`DELETE FROM user_info WHERE uid = $1`, [req.uid]);
 
