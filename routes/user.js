@@ -155,10 +155,10 @@ router.get('/me', authenticate, async (req, res) => {
  */
 router.delete('/delete', authenticate, async (req, res) => {
   try {
-    await pool.query(`DELETE FROM user_game_records WHERE uid = $1`, [req.uid]);
-    await pool.query(`DELETE FROM user_items WHERE uid = $1`, [req.uid]);
-    await pool.query(`DELETE FROM user_stats WHERE uid = $1`, [req.uid]);
     await pool.query(`DELETE FROM user_info WHERE uid = $1`, [req.uid]);
+    await pool.query(`DELETE FROM user_stats WHERE uid = $1`, [req.uid]);
+    await pool.query(`DELETE FROM user_items WHERE uid = $1`, [req.uid]);
+    await pool.query(`DELETE FROM user_game_records WHERE uid = $1`, [req.uid]);
 
     res.status(200).json({ success: true, message: `User data deleted for UID: ${req.uid}` });
   } catch (err) {
