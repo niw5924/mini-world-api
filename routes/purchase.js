@@ -9,7 +9,7 @@ const authenticate = require('../middlewares/authenticate');
  *   post:
  *     summary: 아이템 구매
  *     tags: [Purchase]
- *     description: Firebase 인증 토큰을 통해 확인된 사용자의 purchase_history와 user_item_ownerships 테이블에 구매 내역을 저장합니다.
+ *     description: Firebase 인증 토큰에서 UID를 추출하여 purchase_history와 user_items 테이블에 저장합니다.
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -23,23 +23,13 @@ router.post('/', authenticate, async (req, res) => {
 
   try {
     await pool.query(
-      `
-      INSERT INTO purchase_history (uid, product_id, purchase_time)
-      VALUES ($1, $2, NOW())
-      `,
+      `INSERT INTO purchase_history (uid, product_id) VALUES ($1, $2)`,
       [req.uid, productId]
     );
 
     await pool.query(
-      `
-      INSERT INTO user_item_ownerships (uid, product_id, quantity, updated_at)
-      VALUES ($1, $2, 3, NOW())
-      ON CONFLICT (uid, product_id)
-      DO UPDATE SET
-        quantity = user_item_ownerships.quantity + 3,
-        updated_at = NOW()
-      `,
-      [req.uid, productId]
+      `UPDATE user_items SET ${productId} = ${productId} + 3 WHERE uid = $1`,
+      [req.uid]
     );
 
     res.status(200).json({ success: true, message: 'Purchase successful' });

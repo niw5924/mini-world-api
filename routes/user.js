@@ -9,7 +9,7 @@ const authenticate = require('../middlewares/authenticate');
  *   post:
  *     summary: 사용자 정보 초기화
  *     tags: [User]
- *     description: Firebase 인증 토큰에서 사용자 정보를 추출해 user_info 테이블에 저장합니다.
+ *     description: Firebase 인증 토큰에서 UID를 추출하여 user_info 테이블에 저장합니다.
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -62,6 +62,38 @@ router.post('/init-stats', authenticate, async (req, res) => {
     );
 
     res.status(200).json({ success: true, message: 'User stats initialized' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/user/init-items:
+ *   post:
+ *     summary: 사용자 아이템 초기화
+ *     tags: [User]
+ *     description: Firebase 인증 토큰에서 UID를 추출하여 user_items 테이블에 저장합니다.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 사용자 아이템 초기화 성공
+ *       500:
+ *         description: 서버 오류
+ */
+router.post('/init-items', authenticate, async (req, res) => {
+  try {
+    await pool.query(
+      `
+      INSERT INTO user_items (uid)
+      VALUES ($1)
+      ON CONFLICT (uid) DO NOTHING
+      `,
+      [req.uid]
+    );
+
+    res.status(200).json({ success: true, message: 'User items initialized' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
