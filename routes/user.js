@@ -201,4 +201,37 @@ router.get('/ranking', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/user/purchase-history:
+ *   get:
+ *     summary: 내 구매 기록 조회
+ *     tags: [User]
+ *     description: Firebase 인증 토큰에서 UID를 추출하여 user_purchase_history 테이블에서 구매 기록을 조회합니다.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 구매 기록 반환 성공
+ *       500:
+ *         description: 서버 오류
+ */
+router.get('/purchase-history', authenticate, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `
+      SELECT id, uid, product_id, purchase_time
+      FROM user_purchase_history
+      WHERE uid = $1
+      ORDER BY purchase_time DESC
+      `,
+      [req.uid]
+    );
+
+    res.status(200).json({ success: true, purchase_history: result.rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;
