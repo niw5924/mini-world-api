@@ -9,7 +9,7 @@ const authenticate = require('../middlewares/authenticate');
  *   post:
  *     summary: 아이템 구매
  *     tags: [Purchase]
- *     description: Firebase 인증 토큰에서 UID를 추출하여 purchase_history와 user_items 테이블에 저장합니다.
+ *     description: Firebase 인증 토큰에서 UID를 추출하여 user_purchase_history와 user_items 테이블에 저장합니다.
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -23,7 +23,7 @@ router.post('/', authenticate, async (req, res) => {
 
   try {
     await pool.query(
-      `INSERT INTO purchase_history (uid, product_id) VALUES ($1, $2)`,
+      `INSERT INTO user_purchase_history (uid, product_id) VALUES ($1, $2)`,
       [req.uid, productId]
     );
 
