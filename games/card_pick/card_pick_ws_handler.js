@@ -2,6 +2,7 @@ const admin = require('firebase-admin');
 const { cardPickRooms } = require('./card_pick_rooms');
 const pointMap = require('../game_point_map');
 const { saveGameResult, updateUserStats } = require('../game_result_repository');
+const { useItem } = require('../user_items_repository');
 
 module.exports = function handleCardPickConnection(ws, req) {
   const gameId = req.url.split('/').pop();
@@ -62,12 +63,25 @@ module.exports = function handleCardPickConnection(ws, req) {
           const p1Outcome = result === 0 ? 'draw' : result === 1 ? 'win' : 'lose';
           const p2Outcome = result === 0 ? 'draw' : result === -1 ? 'win' : 'lose';
 
+          const p1Base = pointMap[p1Outcome];
+          const p2Base = pointMap[p2Outcome];
+
+          let p1Delta, p2Delta;
+          try {
+            p1Delta = await useItem(p1.uid, p1Outcome, p1Base);
+            p2Delta = await useItem(p2.uid, p2Outcome, p2Base);
+          } catch (e) {
+            console.error(`[${gameId}] ❌ 아이템 처리 실패:`, e);
+            p1Delta = p1Base;
+            p2Delta = p2Base;
+          }
+
           p1.ws.send(JSON.stringify({
             type: 'result',
             myChoice: p1.choice,
             opponentChoice: p2.choice,
             outcome: p1Outcome,
-            rankPointDelta: pointMap[p1Outcome],
+            rankPointDelta: p1Delta,
           }));
 
           p2.ws.send(JSON.stringify({
@@ -75,7 +89,7 @@ module.exports = function handleCardPickConnection(ws, req) {
             myChoice: p2.choice,
             opponentChoice: p1.choice,
             outcome: p2Outcome,
-            rankPointDelta: pointMap[p2Outcome],
+            rankPointDelta: p2Delta,
           }));
 
           try {
@@ -83,7 +97,7 @@ module.exports = function handleCardPickConnection(ws, req) {
               uid: p1.uid,
               opponentUid: p2.uid,
               gameMode: 'card_pick',
-              pointDelta: pointMap[p1Outcome],
+              pointDelta: p1Delta,
               result: p1Outcome,
             });
 
@@ -91,20 +105,20 @@ module.exports = function handleCardPickConnection(ws, req) {
               uid: p2.uid,
               opponentUid: p1.uid,
               gameMode: 'card_pick',
-              pointDelta: pointMap[p2Outcome],
+              pointDelta: p2Delta,
               result: p2Outcome,
             });
 
             await updateUserStats({
               uid: p1.uid,
               outcome: p1Outcome,
-              pointDelta: pointMap[p1Outcome],
+              pointDelta: p1Delta,
             });
 
             await updateUserStats({
               uid: p2.uid,
               outcome: p2Outcome,
-              pointDelta: pointMap[p2Outcome],
+              pointDelta: p2Delta,
             });
 
             console.log(`[${gameId}] 📝 카드픽 결과 및 스탯 저장 완료`);
