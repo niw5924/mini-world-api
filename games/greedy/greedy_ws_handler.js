@@ -2,6 +2,7 @@ const admin = require('firebase-admin');
 const { greedyRooms } = require('./greedy_rooms');
 const pointMap = require('../game_point_map');
 const { saveGameResult, updateUserStats } = require('../game_result_repository');
+const { useItem } = require('../user_items_repository');
 
 module.exports = function handleGreedyConnection(ws, req) {
   const gameId = req.url.split('/').pop();
