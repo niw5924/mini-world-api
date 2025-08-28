@@ -234,4 +234,36 @@ router.get('/purchase-history', authenticate, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/user/items:
+ *   get:
+ *     summary: 내 아이템 정보 조회
+ *     tags: [User]
+ *     description: Firebase 인증 토큰에서 UID를 추출하여 user_items 테이블에서 아이템 정보를 조회합니다.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 아이템 정보 반환 성공
+ *       500:
+ *         description: 서버 오류
+ */
+router.get('/items', authenticate, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `
+      SELECT lose_protection_3, win_bonus_3
+      FROM user_items
+      WHERE uid = $1
+      `,
+      [req.uid]
+    );
+
+    res.status(200).json({ success: true, items: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;
